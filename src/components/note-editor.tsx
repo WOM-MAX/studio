@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Sparkles, Send, Copy, Check, Bot } from "lucide-react";
@@ -25,6 +25,22 @@ import { useToast } from "@/hooks/use-toast";
 
 const initialState: FormState = {
   message: "",
+};
+
+const customTemplate: NoteTemplate = {
+    id: "custom",
+    name: "Personalizada",
+    description: "Una plantilla de nota personalizada.",
+    content: `---
+tags: [{{tags}}]
+title: "{{title}}"
+---
+
+# {{title}}
+
+{{note}}
+`,
+    placeholder: "Escribe tu idea aquí...",
 };
 
 export function NoteEditor() {
@@ -37,6 +53,10 @@ export function NoteEditor() {
   const [noteContent, setNoteContent] = useState("");
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [customTemplateName, setCustomTemplateName] = useState("");
+
+  const allTemplates = [...templates, customTemplate];
+
 
   useEffect(() => {
     if (formState.message && !formState.finalContent) {
@@ -53,14 +73,14 @@ export function NoteEditor() {
       navigator.clipboard.writeText(formState.finalContent);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({ title: "Copied to clipboard!" });
+      toast({ title: "Copiado al portapapeles!" });
     }
   };
 
   const handleSendToKeep = () => {
     toast({
-        title: "Sent to Google Keep!",
-        description: "Your note has been transferred.",
+        title: "¡Enviado a Google Keep!",
+        description: "Tu nota ha sido transferida.",
     });
   }
 
@@ -68,36 +88,50 @@ export function NoteEditor() {
     <Card className="w-full shadow-lg">
       <form
         action={(formData) => {
+          if (selectedTemplate.id === 'custom') {
+            formData.set('templateName', customTemplateName || 'Nota Personalizada');
+          }
           startTransition(() => formAction(formData));
         }}
       >
         <CardHeader>
-          <CardTitle>Create a new note</CardTitle>
+          <CardTitle>Crear una nueva nota</CardTitle>
           <CardDescription>
-            Select a template that best fits your idea.
+            Selecciona una plantilla que mejor se adapte a tu idea.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs
             defaultValue={selectedTemplate.id}
             onValueChange={(id) =>
-              setSelectedTemplate(templates.find((t) => t.id === id)!)
+              setSelectedTemplate(allTemplates.find((t) => t.id === id)!)
             }
           >
-            <TabsList className="grid w-full grid-cols-3">
-              {templates.map((template) => (
+            <TabsList className="grid w-full grid-cols-4">
+              {allTemplates.map((template) => (
                 <TabsTrigger key={template.id} value={template.id}>
                   {template.name}
                 </TabsTrigger>
               ))}
             </TabsList>
+            <TabsContent value="custom" className="pt-4">
+                <div className="space-y-2">
+                    <Label htmlFor="custom-template-name">Nombre de la Plantilla Personalizada</Label>
+                    <Input 
+                        id="custom-template-name" 
+                        placeholder="Ej. Idea de Libro" 
+                        value={customTemplateName}
+                        onChange={(e) => setCustomTemplateName(e.target.value)}
+                    />
+                </div>
+            </TabsContent>
           </Tabs>
 
           <input type="hidden" name="templateId" value={selectedTemplate.id} />
           <input type="hidden" name="useAi" value={useAi.toString()} />
           
           <div className="space-y-2">
-            <Label htmlFor="note">Note Content</Label>
+            <Label htmlFor="note">Contenido de la Nota</Label>
             <Textarea
               id="note"
               name="note"
@@ -117,13 +151,13 @@ export function NoteEditor() {
             />
             <Label htmlFor="ai-suggestions" className="flex items-center gap-2">
               <Bot className="w-4 h-4 text-primary" />
-              Enable AI Suggestions (Title & Tags)
+              Habilitar Sugerencias de IA (Título y Etiquetas)
             </Label>
           </div>
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={isPending || !noteContent.trim()}>
-            {isPending ? "Processing..." : "Process Note"}
+            {isPending ? "Procesando..." : "Procesar Nota"}
             <Sparkles className="ml-2 h-4 w-4" />
           </Button>
         </CardFooter>
@@ -132,18 +166,18 @@ export function NoteEditor() {
       {formState.finalContent && (
         <>
           <CardHeader>
-            <CardTitle>Processed Note</CardTitle>
+            <CardTitle>Nota Procesada</CardTitle>
             <CardDescription>
-              Your note is ready. You can edit the details before sending.
+              Tu nota está lista. Puedes editar los detalles antes de enviarla.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Suggested Title</Label>
+              <Label htmlFor="title">Título Sugerido</Label>
               <Input id="title" defaultValue={formState.title} />
             </div>
             <div className="space-y-2">
-              <Label>Suggested Tags</Label>
+              <Label>Etiquetas Sugeridas</Label>
               <div className="flex flex-wrap gap-2">
                 {formState.tags?.map((tag) => (
                   <Badge key={tag} variant="secondary">
@@ -153,7 +187,7 @@ export function NoteEditor() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Final Note Preview</Label>
+              <Label>Vista Previa de la Nota Final</Label>
               <div className="relative">
                 <Textarea
                   value={formState.finalContent}
@@ -177,7 +211,7 @@ export function NoteEditor() {
           </CardContent>
           <CardFooter>
             <Button onClick={handleSendToKeep}>
-              Send to Google Keep <Send className="ml-2 h-4 w-4" />
+              Enviar a Google Keep <Send className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>
         </>

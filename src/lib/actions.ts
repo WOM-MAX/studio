@@ -5,9 +5,10 @@ import { templates } from "@/lib/templates";
 import { z } from "zod";
 
 const processNoteSchema = z.object({
-  note: z.string().min(10, "Note must be at least 10 characters long."),
+  note: z.string().min(10, "La nota debe tener al menos 10 caracteres."),
   templateId: z.string(),
   useAi: z.boolean(),
+  templateName: z.string().optional(),
 });
 
 export type FormState = {
@@ -29,26 +30,52 @@ export async function processNote(
       note: formData.get("note"),
       templateId: formData.get("templateId"),
       useAi: useAi,
+      templateName: formData.get("templateName"),
     });
 
     if (!parsed.success) {
       return { message: parsed.error.errors[0].message, error: true };
     }
     
-    const { note, templateId } = parsed.data;
-    const template = templates.find((t) => t.id === templateId);
+    const { note, templateId, templateName } = parsed.data;
+    
+    let template;
 
-    if (!template) {
-      return { message: "Invalid template selected.", error: true };
+    if (templateId === 'custom') {
+        template = {
+            id: "custom",
+            name: templateName || "Nota Personalizada",
+            description: "Una plantilla de nota personalizada.",
+            content: `---
+tags: [{{tags}}]
+title: "{{title}}"
+---
+
+# {{title}}
+
+`,
+        };
+    } else {
+        template = templates.find((t) => t.id === templateId);
     }
 
-    let title = "Untitled Note";
+
+    if (!template) {
+      return { message: "Plantilla inválida seleccionada.", error: true };
+    }
+
+    let title = "Nota sin título";
     let tags: string[] = [];
+    
+    if (templateId === 'custom' && templateName) {
+        tags.push(templateName.toLowerCase().replace(/\s+/g, '-'));
+    }
 
     if (useAi) {
       const suggestions = await suggestTagsAndTitles({ noteContent: note });
       title = suggestions.title;
-      tags = suggestions.tags;
+      // Combine AI tags with custom template tag if present
+      tags = [...new Set([...tags, ...suggestions.tags])];
     }
 
     let finalContent = template.content;
@@ -57,13 +84,13 @@ export async function processNote(
     finalContent = finalContent.replace("{{tags}}", tags.join(", "));
 
     return {
-      message: "Note processed successfully!",
+      message: "¡Nota procesada con éxito!",
       title,
       tags,
       finalContent,
     };
   } catch (e) {
     console.error(e);
-    return { message: "An unexpected error occurred.", error: true };
+    return { message: "Ocurrió un error inesperado.", error: true };
   }
 }
