@@ -1,5 +1,3 @@
-# Firebase Studio
+# Idea Inbox
 
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
+This is a Next.js application built with Firebase Studio. It's designed to quickly capture ideas and process them for your notes.
