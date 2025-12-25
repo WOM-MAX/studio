@@ -19,3 +19,4 @@
 - Simple, minimalist icons that are easy to understand at a glance.
 - Clean, uncluttered layout with ample spacing.
 - Subtle, non-intrusive animations for user feedback.
+tet to show github integration.
