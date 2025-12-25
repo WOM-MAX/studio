@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Sparkles, Send, Copy, Check, Bot } from "lucide-react";
@@ -84,7 +84,7 @@ export function NoteEditor() {
               setSelectedTemplate(templates.find((t) => t.id === id)!)
             }
           >
-            <TabsList className="grid w-full grid-cols-1 md:grid-cols-3">
+            <TabsList className="grid w-full grid-cols-3">
               {templates.map((template) => (
                 <TabsTrigger key={template.id} value={template.id}>
                   {template.name}
